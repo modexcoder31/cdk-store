@@ -15,22 +15,22 @@ const PAYMENT_ADDRESS =
 
 const PRICE_PER_CDK = 1;
 
-/*
-=========================================================
+
+/* =========================================================
    DATA DIRECTORY
-=========================================================
+========================================================= */
 
-Local development:
-    ./data
+/*
+   LOCAL:
+   cdk-store/data
 
-Netlify:
-    /tmp/cdk-store-data
+   NETLIFY:
+   /tmp/cdk-store-data
 
-IMPORTANT:
-Netlify /tmp storage is temporary and is NOT persistent.
-This fixes the deployment crash, but production should
-eventually use Netlify Blobs, Supabase, or another database.
-=========================================================
+   NOTE:
+   Netlify /tmp storage is temporary.
+   It fixes the current deployment crash, but it is not
+   permanent database storage.
 */
 
 const DATA_DIR = process.env.NETLIFY
@@ -196,8 +196,10 @@ app.get(
 
     res.json({
       success: true,
+
       paymentAddress:
         PAYMENT_ADDRESS,
+
       pricePerCDK:
         PRICE_PER_CDK
     });
@@ -243,8 +245,7 @@ app.post(
         quantity,
 
       amountUsd:
-        quantity *
-        PRICE_PER_CDK,
+        quantity * PRICE_PER_CDK,
 
       txHash:
         null,
