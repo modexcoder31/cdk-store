@@ -15,9 +15,37 @@ const PAYMENT_ADDRESS =
 
 const PRICE_PER_CDK = 1;
 
-const DATA_DIR = path.join(__dirname, "data");
-const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
-const CODES_FILE = path.join(DATA_DIR, "codes.json");
+/*
+=========================================================
+   DATA DIRECTORY
+=========================================================
+
+Local development:
+    ./data
+
+Netlify:
+    /tmp/cdk-store-data
+
+IMPORTANT:
+Netlify /tmp storage is temporary and is NOT persistent.
+This fixes the deployment crash, but production should
+eventually use Netlify Blobs, Supabase, or another database.
+=========================================================
+*/
+
+const DATA_DIR = process.env.NETLIFY
+  ? "/tmp/cdk-store-data"
+  : path.join(__dirname, "data");
+
+const ORDERS_FILE = path.join(
+  DATA_DIR,
+  "orders.json"
+);
+
+const CODES_FILE = path.join(
+  DATA_DIR,
+  "codes.json"
+);
 
 
 /* =========================================================
@@ -44,11 +72,9 @@ app.use(
 ========================================================= */
 
 function ensureDataFiles() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, {
-      recursive: true
-    });
-  }
+  fs.mkdirSync(DATA_DIR, {
+    recursive: true
+  });
 
   if (!fs.existsSync(ORDERS_FILE)) {
     fs.writeFileSync(
@@ -76,15 +102,15 @@ ensureDataFiles();
 
 function readJSON(file) {
   try {
-    const content =
-      fs.readFileSync(
-        file,
-        "utf8"
-      );
+    const content = fs.readFileSync(
+      file,
+      "utf8"
+    );
 
     return JSON.parse(content);
 
   } catch (error) {
+
     console.error(
       `Could not read ${file}:`,
       error.message
@@ -167,6 +193,7 @@ function requireAdmin(
 app.get(
   "/api/config",
   (req, res) => {
+
     res.json({
       success: true,
       paymentAddress:
@@ -174,6 +201,7 @@ app.get(
       pricePerCDK:
         PRICE_PER_CDK
     });
+
   }
 );
 
@@ -185,6 +213,7 @@ app.get(
 app.post(
   "/api/orders",
   (req, res) => {
+
     const quantity =
       Number(req.body.quantity);
 
@@ -206,6 +235,7 @@ app.post(
       );
 
     const order = {
+
       id:
         createId("ORD"),
 
@@ -249,6 +279,7 @@ app.post(
       success: true,
 
       order: {
+
         id:
           order.id,
 
@@ -265,6 +296,7 @@ app.post(
           []
       }
     });
+
   }
 );
 
@@ -276,6 +308,7 @@ app.post(
 app.post(
   "/api/orders/:id/submit-payment",
   (req, res) => {
+
     const txHash =
       String(
         req.body.txHash || ""
@@ -360,6 +393,7 @@ app.post(
       success: true,
 
       order: {
+
         id:
           order.id,
 
@@ -379,6 +413,7 @@ app.post(
       message:
         "Payment submitted successfully. Your order is awaiting verification."
     });
+
   }
 );
 
@@ -390,6 +425,7 @@ app.post(
 app.get(
   "/api/orders/:id",
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -418,6 +454,7 @@ app.get(
       success: true,
 
       order: {
+
         id:
           order.id,
 
@@ -436,6 +473,7 @@ app.get(
             : []
       }
     });
+
   }
 );
 
@@ -447,6 +485,7 @@ app.get(
 app.post(
   "/api/admin/login",
   (req, res) => {
+
     const password =
       String(
         req.body.password || ""
@@ -465,9 +504,11 @@ app.post(
 
     res.json({
       success: true,
+
       token:
         ADMIN_PASSWORD
     });
+
   }
 );
 
@@ -480,6 +521,7 @@ app.get(
   "/api/admin/orders",
   requireAdmin,
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -493,6 +535,7 @@ app.get(
           .slice()
           .reverse()
     });
+
   }
 );
 
@@ -505,6 +548,7 @@ app.get(
   "/api/admin/codes",
   requireAdmin,
   (req, res) => {
+
     const codes =
       readJSON(
         CODES_FILE
@@ -539,6 +583,7 @@ app.get(
       codes:
         codes
     });
+
   }
 );
 
@@ -551,6 +596,7 @@ app.post(
   "/api/admin/codes",
   requireAdmin,
   (req, res) => {
+
     const quantity =
       Number(
         req.body.quantity
@@ -580,6 +626,7 @@ app.post(
       i < quantity;
       i++
     ) {
+
       const code =
         "CDK-" +
         crypto
@@ -588,6 +635,7 @@ app.post(
           .toUpperCase();
 
       const item = {
+
         id:
           createId("CDK"),
 
@@ -626,6 +674,7 @@ app.post(
       codes:
         generated
     });
+
   }
 );
 
@@ -638,6 +687,7 @@ app.post(
   "/api/admin/orders/:id/approve",
   requireAdmin,
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -731,6 +781,7 @@ app.post(
 
     selected.forEach(
       item => {
+
         item.status =
           "USED";
 
@@ -739,6 +790,7 @@ app.post(
 
         item.usedAt =
           new Date().toISOString();
+
       }
     );
 
@@ -773,6 +825,7 @@ app.post(
       order:
         order
     });
+
   }
 );
 
@@ -785,6 +838,7 @@ app.post(
   "/api/admin/orders/:id/reject",
   requireAdmin,
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -833,6 +887,7 @@ app.post(
       message:
         "Order rejected."
     });
+
   }
 );
 
@@ -845,6 +900,7 @@ app.post(
   "/api/admin/orders/:id/reset",
   requireAdmin,
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -899,6 +955,7 @@ app.post(
       message:
         "Order reset."
     });
+
   }
 );
 
@@ -911,6 +968,7 @@ app.delete(
   "/api/admin/orders/:id",
   requireAdmin,
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -960,6 +1018,7 @@ app.delete(
       message:
         "Order deleted."
     });
+
   }
 );
 
@@ -971,6 +1030,7 @@ app.delete(
 app.get(
   "/api/orders/:id/codes",
   (req, res) => {
+
     const orders =
       readJSON(
         ORDERS_FILE
@@ -1008,6 +1068,7 @@ app.get(
       codes:
         order.codes
     });
+
   }
 );
 
@@ -1019,11 +1080,13 @@ app.get(
 app.use(
   "/api",
   (req, res) => {
+
     res.status(404).json({
       success: false,
       message:
         "API endpoint not found."
     });
+
   }
 );
 
@@ -1035,6 +1098,7 @@ app.use(
 app.get(
   /.*/,
   (req, res) => {
+
     res.sendFile(
       path.join(
         __dirname,
@@ -1042,6 +1106,7 @@ app.get(
         "index.html"
       )
     );
+
   }
 );
 
@@ -1057,6 +1122,7 @@ app.use(
     res,
     next
   ) => {
+
     console.error(
       error
     );
@@ -1066,6 +1132,7 @@ app.use(
       message:
         "Internal server error."
     });
+
   }
 );
 
@@ -1075,17 +1142,46 @@ app.use(
 ========================================================= */
 
 if (require.main === module) {
+
   app.listen(PORT, () => {
+
     console.log("");
-    console.log("====================================");
-    console.log("             CDK STORE");
-    console.log("====================================");
-    console.log(`Store: http://localhost:${PORT}`);
-    console.log(`Admin: http://localhost:${PORT}/admin.html`);
-    console.log("Production payment flow enabled.");
-    console.log("Manual payment verification required.");
-    console.log("====================================");
+
+    console.log(
+      "===================================="
+    );
+
+    console.log(
+      "             CDK STORE"
+    );
+
+    console.log(
+      "===================================="
+    );
+
+    console.log(
+      `Store: http://localhost:${PORT}`
+    );
+
+    console.log(
+      `Admin: http://localhost:${PORT}/admin.html`
+    );
+
+    console.log(
+      "Production payment flow enabled."
+    );
+
+    console.log(
+      "Manual payment verification required."
+    );
+
+    console.log(
+      "===================================="
+    );
+
   });
+
 }
+
 
 module.exports = app;
