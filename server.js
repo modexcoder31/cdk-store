@@ -33,7 +33,7 @@ const PRICE_PER_CDK = 1;
    permanent database storage.
 */
 
-const DATA_DIR = process.env.NETLIFY
+const DATA_DIR = __dirname.includes("/var/task")
   ? "/tmp/cdk-store-data"
   : path.join(__dirname, "data");
 
