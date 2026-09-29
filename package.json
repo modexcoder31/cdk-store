@@ -8,6 +8,8 @@
     "dev": "node server.js"
   },
   "dependencies": {
-    "express": "4.21.2"
+    "@netlify/functions": "^6.0.0",
+    "express": "4.21.2",
+    "serverless-http": "^4.0.0"
   }
 }
